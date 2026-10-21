@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0c1f16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Practice Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛳</text></svg>">
+<style>
+:root{
+  --bg:#0c1f16; --card:#14291e; --card2:#1b3527; --line:#244534;
+  --txt:#e8f2ec; --dim:#8fb3a1; --acc:#3ddc84; --acc2:#ffd166; --bad:#ff6b6b;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:16px;overscroll-behavior-y:none}
+#app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+header{position:sticky;top:0;z-index:10;background:var(--bg);padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+header .title{font-size:20px;font-weight:700;letter-spacing:.2px}
+header .sub{font-size:12px;color:var(--dim)}
+header .gear{background:none;border:none;color:var(--dim);font-size:22px;padding:6px}
+main{flex:1;padding:16px 16px calc(90px + env(safe-area-inset-bottom,0px))}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:10;background:#0a1a12;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs button{flex:1;background:none;border:none;color:var(--dim);font-size:11px;font-weight:600;padding:10px 0 12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav.tabs button .ic{font-size:18px}
+nav.tabs button.on{color:var(--acc)}
+.badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:1px;color:#7a5b00;background:var(--acc2);border-radius:6px;padding:3px 8px;margin-left:8px;vertical-align:middle}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card.tap{cursor:pointer}
+.card.tap:active{background:var(--card2)}
+.btn{display:block;width:100%;background:var(--acc);color:#06281a;border:none;border-radius:12px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;text-align:center}
+.btn.sec{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.warn{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btnrow{display:flex;gap:10px;margin-top:10px}
+.btnrow .btn{margin:0}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dim);margin:20px 0 10px}
+.drill-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.drill-name{font-weight:700;font-size:15px}
+.drill-unit{font-size:11px;color:var(--dim)}
+.stats{display:flex;gap:14px;margin-top:8px;flex-wrap:wrap}
+.stat{min-width:64px}
+.stat .v{font-size:17px;font-weight:700}
+.stat .l{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+.stat .v.good{color:var(--acc)} .stat .v.poor{color:var(--bad)}
+.spark{margin-top:8px}
+.spark svg,.chart svg{width:100%;display:block}
+.entry{display:flex;justify-content:space-between;align-items:center;padding:11px 4px;border-bottom:1px solid var(--line);font-size:15px}
+.entry:last-child{border-bottom:none}
+.entry .d{color:var(--dim);font-size:13px;width:86px}
+.entry .v{flex:1;font-weight:700}
+.entry .del{background:none;border:none;color:var(--dim);font-size:16px;padding:4px 8px}
+.legend{display:flex;gap:16px;font-size:11px;color:var(--dim);margin-top:6px;flex-wrap:wrap}
+.legend .sw{display:inline-block;width:16px;border-top:2px dashed var(--acc2);vertical-align:middle;margin-right:5px}
+.legend .sw.wc{border-top-color:var(--acc)}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--dim);margin-bottom:6px;font-weight:600}
+.field input{width:100%;background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:13px 14px;font-size:17px;color:var(--txt)}
+.field input:focus{outline:none;border-color:var(--acc)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal .sheet{background:var(--card);border:1px solid var(--line);border-radius:18px 18px 0 0;width:100%;max-width:560px;padding:22px 20px calc(22px + env(safe-area-inset-bottom,0px))}
+.modal h3{font-size:17px;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--dim);line-height:1.5;margin-bottom:14px}
+.empty{color:var(--dim);text-align:center;padding:30px 10px;font-size:14px;line-height:1.6}
+.weekrow{display:flex;gap:10px;margin-bottom:12px}
+.weekcell{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center}
+.weekcell .n{font-size:20px;font-weight:800;color:var(--acc)}
+.weekcell .t{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.hint{font-size:12px;color:var(--dim);margin-top:10px;text-align:center;line-height:1.5}
+.total-line{font-size:14px;color:var(--acc2);font-weight:700;margin:4px 0 14px}
+.areagrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.areagrid .card{margin:0;text-align:center;padding:20px 10px}
+.areagrid .ic{font-size:26px}
+.areagrid .nm{font-weight:700;margin-top:6px;font-size:14px}
+.backrow{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.backrow button{background:none;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 14px;font-size:14px;font-weight:600}
+.backrow .t{font-size:18px;font-weight:700}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--acc);color:#06281a;font-weight:700;padding:10px 18px;border-radius:20px;font-size:14px;z-index:60;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div>
+      <div class="title">Practice Tracker<span id="demoBadge"></span></div>
+      <div class="sub" id="subline">2026 Season</div>
+    </div>
+    <button class="gear" id="gearBtn" aria-label="Data">⚙️</button>
+  </header>
+  <main id="view"></main>
+  <nav class="tabs" id="tabs"></nav>
+</div>
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+<script>
+const SEED = {"areas":{"tee":{"label":"Tee","drills":["driving","mini-driver","3w","2i","3i","4i"]},"approach":{"label":"Approach","drills":["lt-90-140","lt-140-190","lt-140-235","lt-8i","jsc-evens-pct","jsc-odds-pct","jsc-evens-score","jsc-odds-score","zeros","fives"]},"wedges":{"label":"Wedges","drills":["w40","w50","w60","w70","w80","w90","inside10","wedges-combine"]},"shortgame":{"label":"Short Game","drills":["par18-5854","par18-50pw","prox9","hit-stick","circle-high","circle-stock","circle-low","bunker-ladder"]},"putting":{"label":"Putting","drills":["compass","mz-shots","mz-sg","aimpoint","pace"]}},"drills":{"driving":{"area":"tee","name":"Driving Combine","unit":"yds offline (10 shots)","better":"lower","bench":300,"wc":275},"mini-driver":{"area":"tee","name":"Mini Driver Combine","unit":"yds offline (10 shots)","better":"lower","bench":260,"wc":234},"3w":{"area":"tee","name":"3w Combine","unit":"yds offline (10 shots)","better":"lower","bench":290,"wc":261},"2i":{"area":"tee","name":"2i Combine","unit":"yds offline (10 shots)","better":"lower","bench":200,"wc":180},"3i":{"area":"tee","name":"3i Combine","unit":"yds offline (10 shots)","better":"lower","bench":200,"wc":180},"4i":{"area":"tee","name":"4i Combine","unit":"yds offline (10 shots)","better":"lower","bench":200,"wc":180},"lt-90-140":{"area":"approach","name":"90-140 Line Test","unit":"yds","better":"lower","bench":35.17,"wc":18},"lt-140-190":{"area":"approach","name":"140-190 Line Test","unit":"yds","better":"lower","bench":59.67,"wc":30},"lt-140-235":{"area":"approach","name":"140-235 Line Test","unit":"yds","better":"lower","bench":122.92,"wc":43},"lt-8i":{"area":"approach","name":"8i Line Test","unit":"ft","better":"lower","bench":115,"wc":90},"jsc-evens-pct":{"area":"approach","name":"JSC Evens","unit":"success %","better":"higher","bench":null,"wc":null},"jsc-odds-pct":{"area":"approach","name":"JSC Odds","unit":"success %","better":"higher","bench":null,"wc":null},"jsc-evens-score":{"area":"approach","name":"JSC Evens Score (Hard)","unit":"pts","better":"higher","bench":null,"wc":null},"jsc-odds-score":{"area":"approach","name":"JSC Odds Score (Hard)","unit":"pts","better":"higher","bench":null,"wc":null},"zeros":{"area":"approach","name":"0s (40-150)","unit":"ft","better":"lower","bench":30,"wc":20},"fives":{"area":"approach","name":"5s (40-150)","unit":"ft","better":"lower","bench":30,"wc":20},"w40":{"area":"wedges","name":"40 yd","unit":"ft / 8 balls","better":"lower","bench":104,"wc":93.6},"w50":{"area":"wedges","name":"50 yd","unit":"ft / 8 balls","better":"lower","bench":128,"wc":115.2},"w60":{"area":"wedges","name":"60 yd","unit":"ft / 8 balls","better":"lower","bench":132,"wc":118.8},"w70":{"area":"wedges","name":"70 yd","unit":"ft / 8 balls","better":"lower","bench":136,"wc":122.4},"w80":{"area":"wedges","name":"80 yd","unit":"ft / 8 balls","better":"lower","bench":140,"wc":126},"w90":{"area":"wedges","name":"90 yd","unit":"ft / 8 balls","better":"lower","bench":144,"wc":129.6},"inside10":{"area":"wedges","name":"Balls inside 10ft","unit":"%","better":"higher","bench":null,"wc":null},"wedges-combine":{"area":"wedges","name":"Wedges Combine (Hard)","unit":"pts","better":"higher","bench":null,"wc":null},"par18-5854":{"area":"shortgame","name":"Par 18 (58/54)","unit":"score","better":"lower","bench":20,"wc":18},"par18-50pw":{"area":"shortgame","name":"Par 18 (50/PW)","unit":"score","better":"lower","bench":20,"wc":18},"prox9":{"area":"shortgame","name":"9 Hole Prox (3/3/3)","unit":"ft","better":"lower","bench":35,"wc":25},"hit-stick":{"area":"shortgame","name":"Hit the Stick","unit":"of 10","better":"higher","bench":7,"wc":9},"circle-high":{"area":"shortgame","name":"20yd Circle (LW/High)","unit":"of 10","better":"higher","bench":10,"wc":7},"circle-stock":{"area":"shortgame","name":"20yd Circle (Stock)","unit":"of 10","better":"higher","bench":10,"wc":7},"circle-low":{"area":"shortgame","name":"20yd Circle (GW-PW/Low)","unit":"of 10","better":"higher","bench":10,"wc":7},"bunker-ladder":{"area":"shortgame","name":"Bunker Ladder","unit":"consecutive","better":"higher","bench":null,"wc":null},"compass":{"area":"putting","name":"3-5ft Compass","unit":"of 24","better":"higher","bench":20,"wc":22},"mz-shots":{"area":"putting","name":"Money Zone Combine","unit":"shots","better":"lower","bench":27.5,"wc":23},"mz-sg":{"area":"putting","name":"Money Zone Combine SG","unit":"SG","better":"higher","bench":0,"wc":4.5},"aimpoint":{"area":"putting","name":"Aimpoint Collab","unit":"% avg","better":"lower","bench":0.5,"wc":0.3},"pace":{"area":"putting","name":"Pace Drill","unit":"putts","better":"lower","bench":22,"wc":18}},"entries":[{"d":"lt-90-140","dt":"2026-09-14","v":47.2},{"d":"lt-140-190","dt":"2026-09-14","v":119.2},{"d":"w40","dt":"2026-09-14","v":127.3},{"d":"w50","dt":"2026-09-14","v":123.3},{"d":"w60","dt":"2026-09-14","v":136.4},{"d":"w70","dt":"2026-09-14","v":164.4},{"d":"inside10","dt":"2026-09-14","v":19.6},{"d":"circle-stock","dt":"2026-09-14","v":2.5},{"d":"prox9","dt":"2026-09-14","v":96.1},{"d":"compass","dt":"2026-09-14","v":23.2},{"d":"mz-shots","dt":"2026-09-14","v":29.6},{"d":"hit-stick","dt":"2026-09-15","v":3.3},{"d":"prox9","dt":"2026-09-15","v":87.7},{"d":"driving","dt":"2026-09-17","v":169.9},{"d":"mini-driver","dt":"2026-09-17","v":159.6},{"d":"3w","dt":"2026-09-17","v":156.3},{"d":"lt-90-140","dt":"2026-09-17","v":39.9},{"d":"lt-140-190","dt":"2026-09-17","v":105.8},{"d":"lt-140-235","dt":"2026-09-17","v":190.0},{"d":"circle-stock","dt":"2026-09-17","v":3.2},{"d":"prox9","dt":"2026-09-17","v":96.4},{"d":"hit-stick","dt":"2026-09-21","v":4.9},{"d":"circle-stock","dt":"2026-09-21","v":3.9},{"d":"driving","dt":"2026-09-22","v":212.1},{"d":"mini-driver","dt":"2026-09-22","v":164.3},{"d":"3w","dt":"2026-09-22","v":139.8},{"d":"lt-90-140","dt":"2026-09-22","v":44.2},{"d":"lt-140-235","dt":"2026-09-22","v":189.6},{"d":"w50","dt":"2026-09-22","v":126.5},{"d":"w60","dt":"2026-09-22","v":129.2},{"d":"w70","dt":"2026-09-22","v":136.8},{"d":"inside10","dt":"2026-09-22","v":24.9},{"d":"circle-stock","dt":"2026-09-22","v":6.9},{"d":"prox9","dt":"2026-09-22","v":69.6},{"d":"w40","dt":"2026-09-24","v":130.4},{"d":"w50","dt":"2026-09-24","v":137.2},{"d":"inside10","dt":"2026-09-24","v":28.7},{"d":"driving","dt":"2026-09-28","v":194.9},{"d":"mini-driver","dt":"2026-09-28","v":164.6},{"d":"3w","dt":"2026-09-28","v":175.0},{"d":"hit-stick","dt":"2026-09-28","v":8.4},{"d":"compass","dt":"2026-09-28","v":18.7},{"d":"driving","dt":"2026-09-29","v":233.3},{"d":"3w","dt":"2026-09-29","v":162.8},{"d":"circle-stock","dt":"2026-09-29","v":4.4},{"d":"compass","dt":"2026-09-29","v":21.0},{"d":"mz-sg","dt":"2026-09-29","v":1},{"d":"driving","dt":"2026-10-01","v":206.4},{"d":"mini-driver","dt":"2026-10-01","v":140.8},{"d":"3w","dt":"2026-10-01","v":143.1},{"d":"lt-90-140","dt":"2026-10-01","v":47.3},{"d":"lt-140-235","dt":"2026-10-01","v":214.6},{"d":"w40","dt":"2026-10-01","v":113.0},{"d":"w60","dt":"2026-10-01","v":138.0},{"d":"w70","dt":"2026-10-01","v":139.8},{"d":"inside10","dt":"2026-10-01","v":17.3},{"d":"hit-stick","dt":"2026-10-01","v":3.5},{"d":"prox9","dt":"2026-10-01","v":82.8},{"d":"driving","dt":"2026-10-05","v":168.5},{"d":"mini-driver","dt":"2026-10-05","v":175.3},{"d":"3w","dt":"2026-10-05","v":132.1},{"d":"lt-90-140","dt":"2026-10-05","v":47.7},{"d":"lt-140-235","dt":"2026-10-05","v":174.4},{"d":"hit-stick","dt":"2026-10-05","v":3.5},{"d":"circle-stock","dt":"2026-10-05","v":3.6},{"d":"prox9","dt":"2026-10-05","v":78.0},{"d":"mini-driver","dt":"2026-10-06","v":116.6},{"d":"hit-stick","dt":"2026-10-06","v":6.8},{"d":"prox9","dt":"2026-10-06","v":51.0},{"d":"compass","dt":"2026-10-06","v":16.9},{"d":"mz-shots","dt":"2026-10-06","v":28.7},{"d":"driving","dt":"2026-10-08","v":183.3},{"d":"mini-driver","dt":"2026-10-08","v":145.0},{"d":"3w","dt":"2026-10-08","v":138.2},{"d":"w40","dt":"2026-10-08","v":90.9},{"d":"w50","dt":"2026-10-08","v":102.2},{"d":"w60","dt":"2026-10-08","v":140.5},{"d":"inside10","dt":"2026-10-08","v":32.3},{"d":"hit-stick","dt":"2026-10-08","v":4.6},{"d":"prox9","dt":"2026-10-08","v":87.4},{"d":"w40","dt":"2026-10-12","v":104.5},{"d":"w70","dt":"2026-10-12","v":187.9},{"d":"inside10","dt":"2026-10-12","v":42.8},{"d":"lt-140-190","dt":"2026-10-13","v":74.8},{"d":"lt-140-235","dt":"2026-10-13","v":164.9},{"d":"w40","dt":"2026-10-13","v":105.0},{"d":"w50","dt":"2026-10-13","v":115.2},{"d":"w70","dt":"2026-10-13","v":163.7},{"d":"inside10","dt":"2026-10-13","v":34.0},{"d":"driving","dt":"2026-10-15","v":223.8},{"d":"mini-driver","dt":"2026-10-15","v":175.8},{"d":"3w","dt":"2026-10-15","v":150.7},{"d":"lt-140-190","dt":"2026-10-15","v":93.1},{"d":"lt-140-235","dt":"2026-10-15","v":151.8},{"d":"w40","dt":"2026-10-19","v":90.8},{"d":"inside10","dt":"2026-10-19","v":55.0},{"d":"hit-stick","dt":"2026-10-19","v":5.6},{"d":"circle-stock","dt":"2026-10-19","v":1},{"d":"prox9","dt":"2026-10-19","v":94.5}],"demo":true};
+const BUILD = 'demo';
+const LSKEY = 'ezgolf-practice-v1';
+
+let DB = load();
+let view = {name:'today'};
+let returnView = null;
+
+function load(){
+  try{ const raw = localStorage.getItem(LSKEY); if(raw){ const d = JSON.parse(raw); if(d && d.entries) return d; } }catch(e){}
+  return JSON.parse(JSON.stringify(SEED));
+}
+function save(){ localStorage.setItem(LSKEY, JSON.stringify(DB)); }
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(v){
+  if(v===null||v===undefined||isNaN(v)) return '–';
+  const a=Math.abs(v);
+  let s;
+  if(a>=100) s=String(Math.round(v));
+  else if(a>=10) s=(Math.round(v*10)/10).toString();
+  else s=(Math.round(v*100)/100).toString();
+  return s;
+}
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fdate(iso){ const p=iso.split('-'); return parseInt(p[2],10)+' '+MONTHS[parseInt(p[1],10)-1]; }
+function fdateY(iso){ const p=iso.split('-'); return parseInt(p[2],10)+' '+MONTHS[parseInt(p[1],10)-1]+' '+p[0].slice(2); }
+function daysAgo(iso){ const now=new Date(); const d=new Date(iso+'T12:00:00'); const diff=Math.floor((new Date(now.getFullYear(),now.getMonth(),now.getDate()) - new Date(d.getFullYear(),d.getMonth(),d.getDate()))/86400000); return diff; }
+function rel(iso){ const n=daysAgo(iso); if(n<=0)return 'today'; if(n===1)return 'yesterday'; if(n<30)return n+'d ago'; const m=Math.round(n/30.4); return m+'mo ago'; }
+function entriesFor(did){ return DB.entries.filter(e=>e.d===did).slice().sort((a,b)=>a.dt<b.dt?-1:a.dt>b.dt?1:0); }
+function statsFor(did){
+  const es=entriesFor(did); if(!es.length) return null;
+  const meta=DB.drills[did]; const vals=es.map(e=>e.v);
+  const sum=vals.reduce((a,b)=>a+b,0); const avg=sum/vals.length;
+  const best= meta.better==='lower' ? Math.min(...vals) : Math.max(...vals);
+  const last=es[es.length-1];
+  let trend=null;
+  if(es.length>=3){ const prev=vals.slice(0,-1); const pavg=prev.reduce((a,b)=>a+b,0)/prev.length;
+    const diff=last.v-pavg; const improved = meta.better==='lower' ? diff<0 : diff>0;
+    if(Math.abs(diff)>0.001) trend=improved?'up':'down'; else trend='flat'; }
+  return {count:es.length, avg, best, last, trend};
+}
+function trendChip(t,better){
+  if(!t) return '';
+  if(t==='flat') return '<span style="color:var(--dim)">→</span>';
+  const good = t==='up';
+  const arrow = (better==='lower') ? (good?'▼':'▲') : (good?'▲':'▼');
+  return '<span style="color:'+(good?'var(--acc)':'var(--bad)')+'">'+arrow+'</span>';
+}
+function sparkline(es, better){
+  if(es.length<2) return '';
+  const pts=es.slice(-12); const vals=pts.map(e=>e.v);
+  let mn=Math.min(...vals), mx=Math.max(...vals); if(mx-mn<0.001){mn-=1;mx+=1;}
+  const W=100,H=28,P=2;
+  const xs=pts.map((e,i)=>P+i*(W-2*P)/Math.max(pts.length-1,1));
+  const ys=pts.map(e=>H-P-((e.v-mn)/(mx-mn))*(H-2*P));
+  const poly=xs.map((x,i)=>x.toFixed(1)+','+ys[i].toFixed(1)).join(' ');
+  const ly=ys[ys.length-1];
+  return '<div class="spark"><svg viewBox="0 0 100 28" preserveAspectRatio="none">'+
+    '<polyline points="'+poly+'" fill="none" stroke="var(--acc)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '<circle cx="'+xs[xs.length-1].toFixed(1)+'" cy="'+ly.toFixed(1)+'" r="2.2" fill="var(--acc)"/></svg></div>';
+}
+function bigChart(did){
+  const es=entriesFor(did); if(!es.length) return '<div class="empty">No entries yet.<br>Log this drill to start the chart.</div>';
+  const meta=DB.drills[did];
+  const pts=es; const vals=pts.map(e=>e.v);
+  let mn=Math.min(...vals), mx=Math.max(...vals);
+  if(meta.bench!==null&&meta.bench!==undefined){mn=Math.min(mn,meta.bench);mx=Math.max(mx,meta.bench);}
+  if(meta.wc!==null&&meta.wc!==undefined){mn=Math.min(mn,meta.wc);mx=Math.max(mx,meta.wc);}
+  if(mx-mn<0.001){mn-=1;mx+=1;}
+  const pad=(mx-mn)*0.08; mn-=pad; mx+=pad;
+  const W=360,H=190,L=42,R=8,T=12,B=26;
+  const X=i=>L+i*(W-L-R)/Math.max(pts.length-1,1);
+  const Y=v=>T+(1-(v-mn)/(mx-mn))*(H-T-B);
+  let poly=''; pts.forEach((e,i)=>{poly+=(i?' L':'M')+X(i).toFixed(1)+' '+Y(e.v).toFixed(1);});
+  let dots=''; pts.forEach((e,i)=>{dots+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(e.v).toFixed(1)+'" r="2.6" fill="var(--acc)"/>';});
+  let lines='',legend='';
+  if(meta.bench!==null&&meta.bench!==undefined){
+    lines+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(meta.bench)+'" y2="'+Y(meta.bench)+'" stroke="var(--acc2)" stroke-width="1.4" stroke-dasharray="5 4"/>'+
+      '<text x="'+(W-R)+'" y="'+(Y(meta.bench)-4)+'" fill="var(--acc2)" font-size="10" text-anchor="end">benchmark '+fmt(meta.bench)+'</text>';
+    legend+='<span><span class="sw"></span>Benchmark '+fmt(meta.bench)+'</span>';
+  }
+  if(meta.wc!==null&&meta.wc!==undefined){
+    lines+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(meta.wc)+'" y2="'+Y(meta.wc)+'" stroke="var(--acc)" stroke-width="1.4" stroke-dasharray="2 4" opacity=".7"/>'+
+      '<text x="'+(W-R)+'" y="'+(Y(meta.wc)+12)+'" fill="var(--acc)" font-size="10" text-anchor="end" opacity=".85">world class '+fmt(meta.wc)+'</text>';
+    legend+='<span><span class="sw wc"></span>World class '+fmt(meta.wc)+'</span>';
+  }
+  // y axis labels
+  let ylab='';
+  for(let g=0;g<=3;g++){ const gv=mn+(mx-mn)*g/3; const gy=Y(gv);
+    ylab+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+gy+'" y2="'+gy+'" stroke="var(--line)" stroke-width="1"/>'+
+      '<text x="'+(L-6)+'" y="'+(gy+3)+'" fill="var(--dim)" font-size="10" text-anchor="end">'+fmt(gv)+'</text>';
+  }
+  const first=pts[0].dt, lastd=pts[pts.length-1].dt;
+  return '<div class="chart"><svg viewBox="0 0 '+W+' '+H+'">'+
+    ylab+
+    '<path d="'+poly+'" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    dots+lines+
+    '<text x="'+L+'" y="'+(H-8)+'" fill="var(--dim)" font-size="10">'+fdateY(first)+'</text>'+
+    '<text x="'+(W-R)+'" y="'+(H-8)+'" fill="var(--dim)" font-size="10" text-anchor="end">'+fdateY(lastd)+'</text>'+
+    '</svg>'+(legend?'<div class="legend">'+legend+'</div>':'')+'</div>';
+}
+function toast(msg){
+  const r=document.getElementById('toastRoot');
+  r.innerHTML='<div class="toast">'+esc(msg)+'</div>';
+  setTimeout(()=>{r.innerHTML='';},2200);
+}
+
+/* ---------- views ---------- */
+const TABS=[
+  {id:'today',label:'Today',ic:'📋'},
+  {id:'tee',label:'Tee',ic:'🚀'},
+  {id:'approach',label:'Approach',ic:'🎯'},
+  {id:'wedges',label:'Wedges',ic:'🏌️'},
+  {id:'shortgame',label:'Short G',ic:'🥄'},
+  {id:'putting',label:'Putting',ic:'⛳'},
+];
+function renderTabs(){
+  const cur = view.name==='area'?view.area:(view.name==='today'?'today':(view.name==='log'||view.name==='drill'?null:null));
+  document.getElementById('tabs').innerHTML=TABS.map(t=>{
+    const on=(view.name==='area'&&view.area===t.id)||(view.name==='today'&&t.id==='today')||((view.name==='log'||view.name==='drill')&&view.area===t.id);
+    return '<button class="'+(on?'on':'')+'" onclick="go(\''+t.id+'\')"><span class="ic">'+t.ic+'</span>'+t.label+'</button>';
+  }).join('');
+}
+function go(id){ if(id==='today'){view={name:'today'};} else {view={name:'area',area:id};} render(); }
+function render(){
+  renderBadge();
+  renderTabs();
+  const el=document.getElementById('view');
+  if(view.name==='today') el.innerHTML=vToday();
+  else if(view.name==='area') el.innerHTML=vArea(view.area);
+  else if(view.name==='drill') el.innerHTML=vDrill(view.drill);
+  else if(view.name==='log') el.innerHTML=vLog(view.area);
+  window.scrollTo(0,0);
+}
+function vToday(){
+  const now=new Date(); const weekAgo=new Date(now.getTime()-6*86400000);
+  const recent=DB.entries.filter(e=>new Date(e.dt+'T12:00:00')>=new Date(weekAgo.getFullYear(),weekAgo.getMonth(),weekAgo.getDate()));
+  const dates=new Set(recent.map(e=>e.dt));
+  const areasHit=new Set(recent.map(e=>DB.drills[e.d]&&DB.drills[e.d].area));
+  let html='<button class="btn" onclick="showAreaPicker()">+ Log practice</button>';
+  html+='<h2>This week</h2><div class="weekrow">'+
+    '<div class="weekcell"><div class="n">'+dates.size+'</div><div class="t">Sessions</div></div>'+
+    '<div class="weekcell"><div class="n">'+recent.length+'</div><div class="t">Scores</div></div>'+
+    '<div class="weekcell"><div class="n">'+areasHit.size+'</div><div class="t">Areas</div></div></div>';
+  // last practised per area
+  html+='<h2>Last practised</h2>';
+  html+='<div class="card" style="padding:4px 14px">';
+  for(const k of Object.keys(DB.areas)){
+    const dids=DB.areas[k].drills;
+    let latest=null;
+    for(const did of dids){ const es=entriesFor(did); if(es.length){ const l=es[es.length-1]; if(!latest||l.dt>latest) latest=l.dt; } }
+    html+='<div class="entry" style="cursor:pointer" onclick="view={name:\'area\',area:\''+k+'\'};render()"><span class="v" style="font-weight:600">'+DB.areas[k].label+'</span><span class="d" style="width:auto">'+(latest?rel(latest):'never')+'</span></div>';
+  }
+  html+='</div>';
+  // recent entries
+  const all=DB.entries.slice().sort((a,b)=>a.dt<b.dt?1:-1);
+  const latestDates=[...new Set(all.map(e=>e.dt))].slice(0,3);
+  html+='<h2>Recent</h2>';
+  if(!latestDates.length){ html+='<div class="empty">Nothing logged yet.</div>'; }
+  for(const dt of latestDates){
+    const dayEntries=all.filter(e=>e.dt===dt);
+    html+='<div class="card"><div style="font-weight:700;margin-bottom:6px">'+fdate(dt)+' <span style="color:var(--dim);font-weight:400;font-size:12px">· '+rel(dt)+'</span></div>';
+    for(const e of dayEntries){
+      const m=DB.drills[e.d]; if(!m) continue;
+      html+='<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0"><span style="color:var(--dim)">'+esc(m.name)+'</span><span style="font-weight:700">'+fmt(e.v)+'</span></div>';
+    }
+    html+='</div>';
+  }
+  return html;
+}
+function vArea(area){
+  const A=DB.areas[area];
+  let html='<div class="backrow"><span class="t">'+TABS.find(t=>t.id===area).ic+' '+A.label+'</span><span style="flex:1"></span><button onclick="view={name:\'log\',area:\''+area+'\'};render()">+ Log</button></div>';
+  for(const did of A.drills){
+    const m=DB.drills[did]; const s=statsFor(did);
+    html+='<div class="card tap" onclick="view={name:\'drill\',area:\''+area+'\',drill:\''+did+'\'};render()">';
+    html+='<div class="drill-head"><span class="drill-name">'+esc(m.name)+'</span><span class="drill-unit">'+esc(m.unit)+(m.better==='lower'?' · lower=better':'')+'</span></div>';
+    if(s){
+      html+='<div class="stats">'+
+        '<div class="stat"><div class="v">'+fmt(s.last.v)+' '+trendChip(s.trend,m.better)+'</div><div class="l">Last · '+rel(s.last.dt)+'</div></div>'+
+        '<div class="stat"><div class="v">'+fmt(s.best)+'</div><div class="l">Best</div></div>'+
+        '<div class="stat"><div class="v">'+fmt(s.avg)+'</div><div class="l">Avg</div></div>'+
+        '<div class="stat"><div class="v">'+s.count+'</div><div class="l">Logs</div></div></div>';
+      html+=sparkline(entriesFor(did),m.better);
+    } else {
+      html+='<div class="hint" style="text-align:left;margin-top:6px">No entries yet</div>';
+    }
+    html+='</div>';
+  }
+  return html;
+}
+function vDrill(did){
+  const m=DB.drills[did]; const s=statsFor(did);
+  const area=m.area;
+  let html='<div class="backrow"><button onclick="view={name:\'area\',area:\''+area+'\'};render()">← Back</button><span class="t" style="font-size:16px">'+esc(m.name)+'</span></div>';
+  html+='<div class="card"><div class="drill-unit" style="margin-bottom:8px">'+esc(m.unit)+(m.better==='lower'?' · lower is better':' · higher is better')+'</div>';
+  if(s){
+    html+='<div class="stats">'+
+      '<div class="stat"><div class="v">'+fmt(s.last.v)+'</div><div class="l">Last</div></div>'+
+      '<div class="stat"><div class="v good">'+fmt(s.best)+'</div><div class="l">Best</div></div>'+
+      '<div class="stat"><div class="v">'+fmt(s.avg)+'</div><div class="l">Average</div></div>'+
+      '<div class="stat"><div class="v">'+s.count+'</div><div class="l">Logs</div></div></div>';
+  }
+  html+=bigChart(did)+'</div>';
+  html+='<button class="btn" onclick="view={name:\'log\',area:\''+area+'\',focus:\''+did+'\'};render()">+ Log this drill</button>';
+  html+='<h2>History</h2><div class="card" style="padding:4px 14px">';
+  const es=entriesFor(did).slice().reverse();
+  if(!es.length) html+='<div class="empty">No entries yet</div>';
+  es.forEach((e,i)=>{
+    const idx=DB.entries.indexOf(e);
+    html+='<div class="entry"><span class="d">'+fdateY(e.dt)+'</span><span class="v">'+fmt(e.v)+'</span><button class="del" onclick="delEntry('+idx+',\''+did+'\')">🗑</button></div>';
+  });
+  html+='</div>';
+  return html;
+}
+function delEntry(idx,did){
+  if(!confirm('Delete this entry?')) return;
+  DB.entries.splice(idx,1); save(); render(); toast('Deleted');
+}
+function vLog(area){
+  const A=DB.areas[area];
+  const today=new Date(); const iso=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  let html='<div class="backrow"><button onclick="view={name:\'area\',area:\''+area+'\'};render()">← Back</button><span class="t" style="font-size:16px">Log '+A.label+'</span></div>';
+  html+='<div class="card"><div class="field"><label>Date</label><input type="date" id="logDate" value="'+iso+'"></div>';
+  for(const did of A.drills){
+    const m=DB.drills[did];
+    const focus=view.focus===did?' autofocus':'';
+    html+='<div class="field"><label>'+esc(m.name)+' <span style="font-weight:400">('+esc(m.unit)+')</span></label><input type="text" inputmode="decimal" id="f_'+did+'" placeholder="—"'+focus+' oninput="wedgeTotal()"></div>';
+  }
+  if(area==='wedges') html+='<div class="total-line" id="wedgeTotalLine"></div>';
+  html+='</div>';
+  html+='<button class="btn" onclick="saveLog(\''+area+'\')">Save</button>';
+  html+='<div class="hint">Only fill in what you practised today. Empty fields are skipped.</div>';
+  return html;
+}
+function wedgeTotal(){
+  const line=document.getElementById('wedgeTotalLine'); if(!line) return;
+  let sum=0,n=0;
+  for(const did of ['w40','w50','w60','w70','w80','w90']){
+    const el=document.getElementById('f_'+did); if(!el) continue;
+    const v=parseFloat(el.value); if(!isNaN(v)){sum+=v;n++;}
+  }
+  line.textContent = n? ('Daily total '+fmt(sum)+' ft · average '+fmt(sum/n)+' ft') : '';
+}
+function saveLog(area){
+  const dt=document.getElementById('logDate').value;
+  if(!dt){ toast('Pick a date'); return; }
+  let added=0;
+  for(const did of DB.areas[area].drills){
+    const el=document.getElementById('f_'+did);
+    const raw=el.value.trim().replace(',','.');
+    if(raw==='') continue;
+    const v=parseFloat(raw);
+    if(isNaN(v)){ toast('Not a number: '+DB.drills[did].name); return; }
+    DB.entries.push({d:did,dt:dt,v:v}); added++;
+  }
+  if(!added){ toast('Nothing entered'); return; }
+  save(); view={name:'area',area:area}; render(); toast('Saved '+added+' score'+(added>1?'s':''));
+}
+/* ---------- area picker ---------- */
+function showAreaPicker(){
+  let html='<div class="modal" onclick="if(event.target===this)closeModal()"><div class="sheet"><h3>What did you practise?</h3><div class="areagrid">';
+  for(const t of TABS.slice(1)){
+    html+='<div class="card tap" onclick="closeModal();view={name:\'log\',area:\''+t.id+'\'};render()"><div class="ic">'+t.ic+'</div><div class="nm">'+t.label+'</div></div>';
+  }
+  html+='</div></div></div>';
+  document.getElementById('modalRoot').innerHTML=html;
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML=''; }
+
+/* ---------- data menu ---------- */
+document.getElementById('gearBtn').onclick=()=>{
+  const latest=DB.entries.length?DB.entries.slice().sort((a,b)=>a.dt<b.dt?1:-1)[0].dt:null;
+  let html='<div class="modal" onclick="if(event.target===this)closeModal()"><div class="sheet"><h3>Your data</h3>'+
+    '<p>'+DB.entries.length+' scores logged'+(latest?' · up to '+fdateY(latest):'')+'. Everything is stored on this device only.</p>'+
+    '<button class="btn sec" style="margin-bottom:10px" onclick="exportJSON()">⬇️ Export backup (JSON)</button>'+
+    '<button class="btn sec" style="margin-bottom:10px" onclick="document.getElementById(\'impFile\').click()">⬆️ Import backup</button>'+
+    '<input type="file" id="impFile" accept=".json,application/json" style="display:none" onchange="importJSON(this)">'+
+    '<button class="btn warn" onclick="resetData()">Reset to original data</button>'+
+    '<div class="hint">Tip: add this page to your Home Screen for full-screen use.<br>On iPhone: Share → Add to Home Screen.</div>'+
+    '</div></div>';
+  document.getElementById('modalRoot').innerHTML=html;
+};
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='practice-backup.json'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+function importJSON(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const d=JSON.parse(r.result);
+      if(!d.entries||!d.drills) throw new Error('bad');
+      d.demo=false; DB=d; save(); closeModal(); render(); toast('Imported '+d.entries.length+' scores');
+    }catch(e){ toast('Import failed: not a valid backup'); } };
+  r.readAsText(f);
+}
+function resetData(){
+  if(!confirm('Replace everything with the original data?')) return;
+  localStorage.removeItem(LSKEY); DB=JSON.parse(JSON.stringify(SEED)); closeModal(); render(); toast('Reset done');
+}
+
+/* ---------- hash import (personal data link) ---------- */
+async function checkHash(){
+  const h=location.hash||'';
+  if(!h.startsWith('#d=')) return;
+  const payload=h.slice(3);
+  try{
+    let text=null;
+    const bin=Uint8Array.from(atob(payload.replace(/-/g,'+').replace(/_/g,'/')+'=='.slice(0,(4-payload.length%4)%4)),c=>c.charCodeAt(0));
+    try{
+      const ds=new DecompressionStream('deflate-raw');
+      text=await new Response(new Blob([bin]).stream().pipeThrough(ds)).text();
+    }catch(e){ text=new TextDecoder().decode(bin); }
+    const d=JSON.parse(text);
+    if(!d.entries||!d.drills) throw new Error('bad');
+    history.replaceState(null,'',location.pathname);
+    document.getElementById('modalRoot').innerHTML='<div class="modal"><div class="sheet"><h3>Import your practice data?</h3><p>'+d.entries.length+' scores from your 2026 season spreadsheet. This replaces any data currently in the app on this device.</p><div class="btnrow"><button class="btn sec" onclick="closeModal()">Cancel</button><button class="btn" id="doImport">Import</button></div></div></div>';
+    document.getElementById('doImport').onclick=()=>{ d.demo=false; DB=d; save(); closeModal(); render(); toast('Imported '+d.entries.length+' scores'); };
+  }catch(e){
+    history.replaceState(null,'',location.pathname);
+    toast('Data link unreadable - use Import backup instead');
+  }
+}
+
+function renderBadge(){
+  const isDemo = !!DB.demo;
+  document.getElementById('demoBadge').innerHTML = isDemo ? '<span class="badge">DEMO</span>' : '';
+  document.getElementById('subline').textContent = isDemo ? 'Demo data · not real scores' : '2026 Season';
+}
+checkHash().then(render);
+</script>
+</body>
+</html>
